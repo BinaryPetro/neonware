@@ -1,8 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<!-- Mirrored from subzstore.pages.dev/DOWNLOAD_KEY/download by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 03 Jun 2024 15:49:19 GMT -->
-<!-- Added by HTTrack --><meta http-equiv="content-type" content="text/html;charset=utf-8" /><!-- /Added by HTTrack -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -44,6 +41,8 @@
         .btn-primary {
             background-color: #1e1e2f;
             border-color: #212529; /* revert to previous color */
+            color: #ffffff; /* Change text color to white */
+            margin-bottom: 10px; /* Add margin to separate buttons */
         }
 
         .notification {
@@ -162,106 +161,81 @@
                                 
                             </div>
                             <div id="descriptionText" style="display: none;">
-                                <label class="key-description">This is your SubzCheatz Download. This key is valid for <strong>3 hours</strong>, afterwards you can generate a new one. Download the Loader here: <strong><a href="../index.html">Loader</a></strong></label>
-                                <input id="keyDisplay" type="text" name="key" placeholder="Generating a key..." class="form-control" readonly>
+                                <label class="key-description">This is the description for the key that was clicked.</label>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="card-footer" id="copyFooter" style="display: none;">
-                    <div class="row">
-                        <div class="col-lg-12">
-                            <button id="copyButton" class="btn btn-primary btn-block">Copy Key</button>
-                        </div>
-                    </div>
+                <div class="card-footer text-muted text-center">
+                    NeonWare © 2023. All rights reserved.
                 </div>
             </div>
         </div>
     </div>
 </div>
-
-<script src="../../ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script>
-    // Function to display cooldown notification
-    function showCooldownNotification(message) {
-        var cooldownNotification = $('#cooldownNotification');
-        cooldownNotification.find('#cooldownDisplay').text(message); // Changed selector to #cooldownDisplay
-        cooldownNotification.addClass('show orange');
+    var isCooldown = false;
+    var cooldownTime = 30 * 60 * 1000;
+    function handleButtonClick(buttonId, key, description) {
+        if (isCooldown) {
+            var timeLeft = getCooldownTimeLeft();
+            displayCooldownNotification(timeLeft);
+            return;
+        }
+
+        setKeyText(key);
+        setKeyDescription(description);
+        document.getElementById("keyDisplay").value = key;
+        document.getElementById("keyDisplay").style.display = "block";
+        document.getElementById("descriptionText").style.display = "block";
+        startCooldown();
+    }
+
+    function setKeyText(key) {
+        var keyDisplay = document.getElementById('keyDisplay');
+        keyDisplay.textContent = 'Key: ' + key;
+        keyDisplay.style.color = '#ffffff'; // Set text color to white
+    }
+
+    function setKeyDescription(description) {
+        var descriptionText = document.getElementById('descriptionText');
+        descriptionText.querySelector('.key-description').textContent = description;
+    }
+
+    function startCooldown() {
+        isCooldown = true;
+        localStorage.setItem('cooldownStart', Date.now().toString());
         setTimeout(function() {
-            cooldownNotification.removeClass('show');
-        }, 4900);
+            isCooldown = false;
+        }, cooldownTime);
     }
 
-    // Define getKey outside of the document ready callback
-    function getKey(type) {
-        // Hide buttons and show descriptionText & copyFooter
-        $('#keyButtons').hide();
-        $('#descriptionText').show();
-        $('#copyFooter').show();
-
-        $.get(`https://googlecheatz-keygen.replit.app/getkey?type=${type}`) 
-            .done(function(data) {
-                if (data.key) {
-                    $('#keyDisplay').val(data.key);
-                } else {
-                    $('#keyDisplay').val('Can\'t find a Key in stock. Please make a ticket');
-                }
-            })
-            .fail(function(xhr) {
-                if (xhr.status === 429) {
-					$('#keyDisplay').val('Slow down! Please wait before generating a new key.');
-                    var cooldownMessage = xhr.responseJSON.error
-					showCooldownNotification(cooldownMessage);
-                } else {
-                    $('#keyDisplay').val('Error retrieving key');
-                }
-            });
+    function getCooldownTimeLeft() {
+        var cooldownStart = localStorage.getItem('cooldownStart');
+        if (!cooldownStart) return cooldownTime;
+        var timeElapsed = Date.now() - parseInt(cooldownStart, 10);
+        var timeLeft = cooldownTime - timeElapsed;
+        return timeLeft > 0 ? timeLeft : 0;
     }
 
-    $(document).ready(function() {
-        var isFortniteMainDown = false;
-        var isNovaEraDown = false; // Set this to true for demonstration purposes, replace with actual status
+    function displayCooldownNotification(timeLeft) {
+        var cooldownNotification = document.getElementById('cooldownNotification');
+        var cooldownDisplay = document.getElementById('cooldownDisplay');
+        var minutesLeft = Math.floor(timeLeft / 60000);
+        var secondsLeft = Math.floor((timeLeft % 60000) / 1000);
+        cooldownDisplay.textContent = 'Please wait ' + minutesLeft + ' minutes and ' + secondsLeft + ' seconds before generating another key.';
+        cooldownNotification.classList.add('show');
+        setTimeout(function() {
+            cooldownNotification.classList.remove('show');
+        }, 5000);
+    }
 
-        $('#keyButtons button').click(function() {
-            var keyType = $(this).text().trim();
-            var isCheatDown = false;
-
-            if (keyType === 'Fortnite Main') {
-                isCheatDown = isFortniteMainDown;
-            } else if (keyType === 'Nova/Era') {
-                isCheatDown = isNovaEraDown;
-            }
-
-            if (isCheatDown) {
-                var updateNotification = $('#updateNotification');
-                updateNotification.addClass('show red'); // Changed to jQuery selector
-                setTimeout(function() {
-                    updateNotification.removeClass('show');
-                }, 4900);
-                $('#keyDisplay').val('Cheat is currently down for game update.');
-                $('#copyButton').prop('disabled', true);
-            } else {
-                $('#copyButton').click(function() {
-                    var $temp = $("<input>");
-                    $("body").append($temp);
-                    $temp.val($('#keyDisplay').val()).select();
-                    document.execCommand("copy");
-                    $temp.remove();
-
-                    var notification = $('#notification');
-                    notification.addClass('show');
-                    setTimeout(function() {
-                        notification.removeClass('show');
-                    }, 4900);
-                });
-            }
-        });
-    });
+    window.onload = function() {
+        var timeLeft = getCooldownTimeLeft();
+        if (timeLeft > 0) {
+            startCooldown();
+        }
+    };
 </script>
-<div id="notification" class="notification">
-    <p>Successfully copied to clipboard!</p>
-</div>
 </body>
-
-<!-- Mirrored from subzstore.pages.dev/DOWNLOAD_KEY/download by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 03 Jun 2024 15:49:20 GMT -->
 </html>
